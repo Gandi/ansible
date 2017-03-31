@@ -57,7 +57,7 @@ options:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen", "Baltimore"]
+     choices: ["Saint Denis", "Bissen"]
   user:
     description:
       - user to create at startup

@@ -35,7 +35,7 @@ options:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen", "Baltimore"]
+     choices: ["Saint Denis", "Bissen"]
   bandwith:
      description:
        - bandwith ot the interface in bits/s (float)
