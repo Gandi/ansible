@@ -85,6 +85,11 @@ options:
       - extra disks to attach to instances
       required: false
       default: []
+  farm:
+    description:
+      - identifier used to group multiple instances
+      required: false
+      default: null
 
 requirements: [ "libcloud" ]
 authors: [Aymeric Barantal <mric@gandi.net>, Eric Garrigues  <eric@gandi.net>]
@@ -107,6 +112,7 @@ EXAMPLES = '''
     datacenter: Bissen
     sshkey_ids: [1, 2]
     interfaces: {'publics': ['ipv4': 'auto'], 'privates': ['vlan': 'database']}
+    farm: "my_cluster"
   register: host_info
 '''
 
@@ -201,7 +207,8 @@ def get_instance_info(inst):
         'datacenter_id': inst.extra.get('datacenter_id'),
         'public_ifaces': public_ifaces,
         'private_ifaces': private_ifaces,
-        'cname': host_cname_on
+        'cname': host_cname_on,
+        'farm': inst.extra.get('farm')
     })
 
 
@@ -355,6 +362,7 @@ def create_instances(module, driver, instance_names):
     user = module.params.get('user')
     password = module.params.get('password')
     sshkey_ids = module.params.get('sshkey_ids')
+    farm = module.params.get('farm')
 
     # module.fail_json(msg=interfaces, changed=False)
 
@@ -407,14 +415,16 @@ def create_instances(module, driver, instance_names):
                                               location=lc_location,
                                               login=user,
                                               password=password,
-                                              interfaces=interfaces)
+                                              interfaces=interfaces,
+                                              farm=farm)
                 else:
                     inst = driver.create_node(name=name,
                                               size=lc_size,
                                               image=lc_image,
                                               location=lc_location,
                                               keypairs=sshkey_ids,
-                                              interfaces=interfaces)
+                                              interfaces=interfaces,
+                                              farm=farm)
 
                 changed = True
 
@@ -526,7 +536,8 @@ def main():
             domain_name=dict(),
             vlans=dict(type='list'),
             interfaces=dict(type='dict'),
-            default_vlan=dict()
+            default_vlan=dict(),
+            farm=dict()
         )
     )
 
