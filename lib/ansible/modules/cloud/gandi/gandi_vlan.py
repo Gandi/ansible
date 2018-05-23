@@ -33,7 +33,7 @@ options:
     description:
       - desired state of the resource
     required: false
-    default: "present"
+    default: "created"
     choices: ["created", "deleted"]
     aliases: []
   datacenter:
@@ -62,7 +62,7 @@ EXAMPLES = '''
 - gandi_vlan:
     name: mypvlan
     datacenter: "Bissen"
-    subnet: 192.168.0.0./24
+    subnet: 192.168.0.0/24
     gateway: 192.168.0.254
 
 '''
@@ -105,12 +105,12 @@ def get_pvlan_info(pvlan):
 
 
 def get_pvlan(driver, name):
-    pvlans = driver.ex_list_pvlans()
+    pvlans = driver.ex_list_vlans()
     return _get_by_name(name, pvlans)
 
 
 def get_pvlans(driver, vlan_names = []):
-    all_pvlans = driver.ex_list_pvlans()
+    all_pvlans = driver.ex_list_vlans()
     pvlans = [_get_by_name(name, all_pvlans) for name in vlan_names]
 
     return pvlans
@@ -155,7 +155,7 @@ def create_pvlan(module, driver, pvlan_name):
 
     if not pvlan:
         try:
-            pvlan = driver.ex_create_pvlan(name=pvlan_name,
+            pvlan = driver.ex_create_vlan(name=pvlan_name,
                                            location=lc_location,
                                            subnet=subnet,
                                            gateway=gateway)
@@ -188,7 +188,7 @@ def delete_pvlan(module, driver, pvlan_name):
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     if pvlan:
-        driver.ex_delete_pvlan(pvlan)
+        driver.ex_delete_vlan(pvlan)
         changed = True
 
     return (changed, pvlan_name)
