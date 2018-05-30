@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright 2018 Gandi
+# Author: Pablo Piedrafita <pablo.piedrafita at gandi dot net>
 #
 # This file is part of Ansible
 #
@@ -156,14 +157,15 @@ class GandiInventory(object):
             else:
                 groups[location.name]['hosts'].append(name)
 
-            for vlan in node_vlans:
-                vlan_info = next(x for x in vlans if vlan == x.name)
-                if vlan not in groups:
-                    groups[vlan] = {'hosts': [], 'vars': {}}
-                    groups[vlan]['vars'] = self.vlan_to_dict(vlan_info)
-                    groups[vlan]['hosts'] = [name]
-                else:
-                    groups[vlan]['hosts'].append(name)
+            if not node_vlans:
+                for vlan in node_vlans:
+                    vlan_info = next(x for x in vlans if vlan == x.name)
+                    if vlan not in groups:
+                        groups[vlan] = {'hosts': [], 'vars': {}}
+                        groups[vlan]['vars'] = self.vlan_to_dict(vlan_info)
+                        groups[vlan]['hosts'] = [name]
+                    else:
+                        groups[vlan]['hosts'].append(name)
 
         groups['_meta'] = meta
         return groups
