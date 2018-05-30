@@ -109,7 +109,7 @@ EXAMPLES = '''
     extra_disks: [{'size': 10}]
     bandwidth: 102400.0
     state: running
-    datacenter: Bissen
+    datacenter: LU-BI1
     sshkey_ids: [1, 2]
     interfaces: {'publics': ['ipv4': 'auto'], 'privates': ['vlan': 'database']}
     farm: "my_cluster"
@@ -151,7 +151,7 @@ def get_pvlans(driver, vlan_names=[]):
     return pvlans
 
 
-def get_instance_info(inst):
+def get_instance_info(driver, inst):
     """Retrieves instance information from an instance object and returns it
     as a dictionary.
     """
@@ -163,30 +163,31 @@ def get_instance_info(inst):
 
     host_cname_on = None
 
-    for iface in inst.extra.get('ifaces', []):
+    for iface_id in inst.extra.get('ifaces', []):
         iface_name = 'i%s' % ifaces_count
+        iface = driver.ex_get_interface(iface_id)
 
-        if iface['vlan']:
+        if iface.extra['vlan']:
             vlan_name = iface['vlan']['name']
         else:
             vlan_name = 'public'
 
-        iface_info = {'id': iface['id'],
-                      'bandwidth': iface['bandwidth'],
-                      'type': iface['type'],
+        iface_info = {'id': iface.id,
+                      'bandwidth': iface.extra['bandwidth'],
+                      'type': iface.extra['type'],
                       'vlan': vlan_name,
                       'iface_name': iface_name,
                       'ips': []}
 
-        for ip in iface.get('ips', []):
-            if int(ip['version']) == 4:
+        for ip in iface.ips:
+            if int(ip.version) == 4:
                 record_type = 'A'
             else:
                 record_type = 'AAAA'
-            iface_info['ips'].append({'id': ip['id'],
-                                      'ip': ip['ip'],
+            iface_info['ips'].append({'id': ip.id,
+                                      'ip': ip.inet,
                                       'record_type': record_type,
-                                      'version': ip['version']
+                                      'version': ip.version
                                       })
 
         if vlan_name == 'public':
@@ -246,7 +247,6 @@ def get_size(driver, name):
 def get_node(driver, name):
     nodes = driver.list_nodes()
     return _get_by_name(name, nodes)
-
 
 def stop_instances(module, driver, instance_names):
     """Stop instances. Attributes other than instance_names are picked
@@ -430,7 +430,7 @@ def create_instances(module, driver, instance_names):
 
             except GandiException as e:
                 msg = 'Unexpected error when creating instance %s' % name
-                msg = msg + e
+                #msg = msg + e
                 module.fail_json(msg=msg)
 
         if inst:
@@ -459,11 +459,11 @@ def create_instances(module, driver, instance_names):
     if len(new_instances) > 0:
         if len(new_instances) > 1:
             for inst in new_instances:
-                d = get_instance_info(inst)
+                d = get_instance_info(driver,inst)
                 instance_names.append(d['name'])
                 instance_json_data.append(d)
         else:
-            d = get_instance_info(new_instances[0])
+            d = get_instance_info(driver,new_instances[0])
             instance_names = d['name']
             instance_json_data = d
 
@@ -489,7 +489,7 @@ def terminate_instances(module, driver, instance_names):
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
         if inst:
             inst = driver.ex_get_node(inst.id)
-            d = get_instance_info(inst)
+            d = get_instance_info(driver,inst)
 
             instance_json_data.append(d)
 
