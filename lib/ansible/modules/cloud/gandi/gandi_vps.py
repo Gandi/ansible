@@ -57,7 +57,7 @@ options:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen"]
+     choices: ["FR-SD3","FR-SD5","FR-SD6", "LU-BI1"]
   user:
     description:
       - user to create at startup
@@ -101,7 +101,7 @@ EXAMPLES = '''
 - gandi_vps:
     gandi_api_key: "MY_API_KEY"
     name: myhost.fqdn
-    image: "Debian 8 64 bits (HVM)"
+    image: "Debian 8"
     machine_type: custom
     cores: 2
     memory: 2048
@@ -167,15 +167,10 @@ def get_instance_info(driver, inst):
         iface_name = 'i%s' % ifaces_count
         iface = driver.ex_get_interface(iface_id)
 
-        if iface.extra['vlan']:
-            vlan_name = iface['vlan']['name']
-        else:
-            vlan_name = 'public'
-
         iface_info = {'id': iface.id,
                       'bandwidth': iface.extra['bandwidth'],
                       'type': iface.extra['type'],
-                      'vlan': vlan_name,
+                      'vlan': iface.extra.get('vlan', 'public'),
                       'iface_name': iface_name,
                       'ips': []}
 
@@ -225,10 +220,10 @@ def get_image(driver, name, datacenter):
     return _get_by_name(name, images)
 
 
-def get_volume(driver, name, datacenter):
+def get_volume(driver, name):
     """Get a disk by name and datacenter location
     """
-    disks = driver.list_volumes(datacenter)
+    disks = driver.list_volumes()
     return _get_by_name(name, disks)
 
 
@@ -377,7 +372,7 @@ def create_instances(module, driver, instance_names):
 
     lc_image = get_image(driver, image, lc_location)
     if not lc_image:
-        lc_image = get_volume(driver, image, lc_location)
+        lc_image = get_volume(driver, image)
         if not lc_image:
             module.fail_json(msg='No such image or volume %s on %s' %
                              (image, datacenter),
@@ -406,7 +401,6 @@ def create_instances(module, driver, instance_names):
         inst = get_node(driver, name)
         if not inst:
             try:
-                # XXX : to fix in libcloud
                 lc_size.bandwidth = 102400
                 if not sshkey_ids:
                     inst = driver.create_node(name=name,
@@ -517,7 +511,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             gandi_api_key=dict(),
-            image=dict(default='Debian 8 64 bits (HVM)'),
+            image=dict(default='Debian 8'),
             instance_names=dict(),
             machine_type=dict(default='Small instance'),
             cores=dict(),
@@ -529,7 +523,7 @@ def main():
             state=dict(choices=['running', 'halted', 'started',
                                 'deleted', 'rebooted'],
                        default='running'),
-            datacenter=dict(default='Bissen'),
+            datacenter=dict(default='FR-SD5'),
             user=dict(),
             password=dict(),
             sshkey_ids=dict(type='list'),

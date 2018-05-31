@@ -40,7 +40,7 @@ options:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen"]
+     choices: ["FR-SD3","FR-SD5","FR-SD6", "LU-BI1"]
   subnet:
     description:
       - CIDR IPv4 subnet
@@ -61,7 +61,7 @@ EXAMPLES = '''
 # paris datacenter
 - gandi_vlan:
     name: mypvlan
-    datacenter: "Bissen"
+    datacenter: "LU-BI1"
     subnet: 192.168.0.0/24
     gateway: 192.168.0.254
 
@@ -201,7 +201,7 @@ def main():
             name=dict(),
             state=dict(choices=['created', 'deleted'],
                        default='created'),
-            datacenter=dict(default='Bissen'),
+            datacenter=dict(default='FR-SD5'),
             subnet=dict(),
             gateway=dict()
         )
