@@ -111,7 +111,7 @@ EXAMPLES = '''
     state: running
     datacenter: LU-BI1
     sshkey_ids: [1, 2]
-    interfaces: {'publics': ['ipv4': 'auto'], 'privates': ['vlan': 'database']}
+    interfaces: {'publics': [{'ipv4':'auto'}], 'privates': [{'vlan':'database', 'ipv4': '192.168.1.1'},{'vlan':'vlan1'}]}
     farm: "my_cluster"
   register: host_info
 '''
@@ -269,7 +269,7 @@ def stop_instances(module, driver, instance_names):
 
             except GandiException as e:
                 msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + e
+                msg = msg + str(e)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -299,7 +299,7 @@ def start_instances(module, driver, instance_names):
 
             except GandiException as e:
                 msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + e
+                msg = msg + str(e)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -328,7 +328,7 @@ def reboot_instances(module, driver, instance_names):
 
             except GandiException as e:
                 msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + e
+                msg = msg + str(e)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -426,7 +426,7 @@ def create_instances(module, driver, instance_names):
 
             except GandiException as e:
                 msg = 'Unexpected error when creating instance %s' % name
-                #msg = msg + e
+                msg = msg + str(e)
                 module.fail_json(msg=msg)
 
         if inst:
@@ -444,7 +444,7 @@ def create_instances(module, driver, instance_names):
                         if not disk_attached:
                             msg = 'Error when attaching % to %s' % (disk_name,
                                                                     inst.name)
-                            msg = msg + e
+                            msg = msg + str(e)
                             module.fail_json(msg=msg)
 
             inst_full = driver.ex_get_node(inst.id)
