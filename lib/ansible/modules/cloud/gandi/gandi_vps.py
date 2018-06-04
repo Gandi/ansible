@@ -167,6 +167,8 @@ def get_instance_info(driver, inst):
         iface_name = 'i%s' % ifaces_count
         iface = driver.ex_get_interface(iface_id)
 
+        vlan_name = iface.extra.get('vlan', 'public')
+
         iface_info = {'id': iface.id,
                       'bandwidth': iface.extra['bandwidth'],
                       'type': iface.extra['type'],
@@ -429,20 +431,21 @@ def create_instances(module, driver, instance_names):
 
         if inst:
             if changed:
-                for disk in extra_disks:
-                    disk_size = int(disk.get('size')) * 1024
-                    disk_name = disk.get('name')
-                    disk = driver.create_volume(disk_size,
-                                                name=disk_name,
-                                                location=lc_location)
+                if extra_disks:
+                    for disk in extra_disks:
+                        disk_size = int(disk.get('size'))
+                        disk_name = disk.get('name')
+                        disk = driver.create_volume(disk_size,
+                                                    name=disk_name,
+                                                    location=lc_location)
 
-                    disk_attached = driver.attach_volume(inst, disk)
+                        disk_attached = driver.attach_volume(inst, disk)
 
-                    if not disk_attached:
-                        msg = 'Error when attaching % to %s' % (disk_name,
-                                                                inst.name)
-                        msg = msg + e
-                        module.fail_json(msg=msg)
+                        if not disk_attached:
+                            msg = 'Error when attaching % to %s' % (disk_name,
+                                                                    inst.name)
+                            msg = msg + e
+                            module.fail_json(msg=msg)
 
             inst_full = driver.ex_get_node(inst.id)
             new_instances.append(inst_full)
@@ -529,7 +532,7 @@ def main():
             sshkey_ids=dict(type='list'),
             domain_name=dict(),
             vlans=dict(type='list'),
-            interfaces=dict(type='dict'),
+            interfaces=dict(type='dict', default={}),
             default_vlan=dict(),
             farm=dict()
         )
