@@ -557,7 +557,7 @@ def main():
     if isinstance(instance_names, list):
         inames = instance_names
     elif isinstance(instance_names, str):
-        inames = instance_names.split(',')
+        inames = [x.strip() for x in instance_names.split(',')]
 
     if name:
         inames.append(name)
