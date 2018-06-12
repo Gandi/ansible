@@ -88,22 +88,6 @@ except ImportError:
           "msg='libcloud with Gandi support required for this module'")
     sys.exit(1)
 
-
-# # Load in the libcloud secrets file
-# try:
-#     import secrets
-# except ImportError:
-#     secrets = None
-
-
-# ARGS = getattr(secrets, 'GANDI_PARAMS', ())
-
-# if not ARGS:
-#     print("failed=True " +
-#           "msg='Missing Gandi connection in libcloud secrets file.'")
-#     sys.exit(1)
-
-
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
     # XXX : better error management
@@ -190,7 +174,7 @@ def create_iface(module, driver):
                                        bandwidth=bandwidth)
 
         changed = True
-    except GandiException as e:
+    except GandiException as exc:
         module.fail_json(msg='Unexpected error attempting to create iface')
 
     iface_json_data = get_iface_info(iface)
@@ -213,8 +197,8 @@ def delete_iface(module, driver, iface_id):
 
     try:
         iface = get_iface(driver, iface_id)
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if iface:
         driver.ex_delete_iface(iface)
@@ -250,8 +234,8 @@ def main():
         gandi = get_driver(Provider.GANDI)(gandi_api_key)
         gandi.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if not dc and state in ['created']:
         module.fail_json(msg='Must specify a "datacenter"', changed=False)

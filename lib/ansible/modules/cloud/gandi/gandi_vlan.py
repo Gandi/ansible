@@ -160,8 +160,8 @@ def create_pvlan(module, driver, pvlan_name):
                                            subnet=subnet,
                                            gateway=gateway)
             changed = True
-        except GandiException as e:
-            msg = 'Unexpected error attempting to create pvlan %s' % pvlan_name
+        except GandiException as exc:
+            msg = 'Unexpected error attempting to create pvlan %s: %r' % (pvlan_name, exc)
             module.fail_json(msg=msg)
 
     pvlan_json_data = get_pvlan_info(pvlan)
@@ -184,8 +184,8 @@ def delete_pvlan(module, driver, pvlan_name):
 
     try:
         pvlan = get_pvlan(driver, pvlan_name)
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if pvlan:
         driver.ex_delete_vlan(pvlan)
@@ -217,8 +217,8 @@ def main():
         gandi = get_driver(Provider.GANDI)(gandi_api_key)
         gandi.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if not name:
         module.fail_json(msg='Must specify a "name"', changed=False)

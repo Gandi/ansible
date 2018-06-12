@@ -266,9 +266,8 @@ def stop_instances(module, driver, instance_names):
                 if ope_status:
                     changed = True
 
-            except GandiException as e:
-                msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + str(e)
+            except GandiException as exc:
+                msg = 'Unexpected error when stopping instance %s: %r' % (name, exc)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -296,9 +295,8 @@ def start_instances(module, driver, instance_names):
                 if ope_status:
                     changed = True
 
-            except GandiException as e:
-                msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + str(e)
+            except GandiException as exc:
+                msg = 'Unexpected error when starting instance %s: %r' % (name, exc)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -325,9 +323,8 @@ def reboot_instances(module, driver, instance_names):
                 if ope_status:
                     changed = True
 
-            except GandiException as e:
-                msg = 'Unexpected error when starting instance %s' % name
-                msg = msg + str(e)
+            except GandiException as exc:
+                msg = 'Unexpected error when rebooting instance %s: %r' % (name, exc)
                 module.fail_json(msg=msg)
 
     return (changed, instance_names)
@@ -423,9 +420,8 @@ def create_instances(module, driver, instance_names):
 
                 changed = True
 
-            except GandiException as e:
-                msg = 'Unexpected error when creating instance %s' % name
-                msg = msg + str(e)
+            except GandiException as exc:
+                msg = 'Unexpected error when creating instance %s: %r' % (name, exc)
                 module.fail_json(msg=msg)
 
         if inst:
@@ -481,8 +477,8 @@ def terminate_instances(module, driver, instance_names):
     for name in instance_names:
         try:
             inst = get_node(driver, name)
-        except Exception as e:
-            module.fail_json(msg=unexpected_error_msg(e), changed=False)
+        except Exception as exc:
+            module.fail_json(msg=unexpected_error_msg(exc), changed=False)
         if inst:
             inst = driver.ex_get_node(inst.id)
             d = get_instance_info(driver,inst)
@@ -548,8 +544,8 @@ def main():
         gandi = get_driver(Provider.GANDI)(gandi_api_key)
         gandi.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     inames = []
 
