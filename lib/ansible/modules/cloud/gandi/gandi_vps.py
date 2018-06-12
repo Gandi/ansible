@@ -166,13 +166,12 @@ def get_instance_info(driver, inst):
     for iface_id in inst.extra.get('ifaces', []):
         iface_name = 'i%s' % ifaces_count
         iface = driver.ex_get_interface(iface_id)
-
         vlan_name = iface.extra.get('vlan', 'public')
 
         iface_info = {'id': iface.id,
                       'bandwidth': iface.extra['bandwidth'],
                       'type': iface.extra['type'],
-                      'vlan': iface.extra.get('vlan', 'public'),
+                      'vlan': vlan_name,
                       'iface_name': iface_name,
                       'ips': []}
 
