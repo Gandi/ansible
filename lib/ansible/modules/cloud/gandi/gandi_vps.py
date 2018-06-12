@@ -221,10 +221,10 @@ def get_image(driver, name, datacenter):
     return _get_by_name(name, images)
 
 
-def get_volume(driver, name):
+def get_volume(driver, name, datacenter=None):
     """Get a disk by name and datacenter location
     """
-    disks = driver.list_volumes()
+    disks = driver.list_volumes(datacenter)
     return _get_by_name(name, disks)
 
 
@@ -370,7 +370,7 @@ def create_instances(module, driver, instance_names):
 
     lc_image = get_image(driver, image, lc_location)
     if not lc_image:
-        lc_image = get_volume(driver, image)
+        lc_image = get_volume(driver, image, lc_location)
         if not lc_image:
             module.fail_json(msg='No such image or volume %s on %s' %
                              (image, datacenter),
