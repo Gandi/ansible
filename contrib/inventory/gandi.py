@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2018 Gandi
+# Copyright 2018 Gandi SAS
 # Author: Pablo Piedrafita <pablo.piedrafita at gandi dot net>
 #
 # This file is part of Ansible
@@ -104,6 +104,8 @@ class GandiInventory(object):
         return {
             'node_id': node.id,
             'state': node.state,
+            'ansible_ssh_host': node.public_ips[0],
+            'ansible_ssh_user': 'root',
             'public_ips': node.public_ips,
             'private_ips': node.private_ips,
             'ai_active': node.extra['ai_active'],
