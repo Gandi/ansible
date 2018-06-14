@@ -101,10 +101,13 @@ class GandiInventory(object):
 
     def node_metadata_to_dict(self, node):
         '''Converts a node object to a dictionary'''
+        ansible_ssh_host = next(iter(node.public_ips), None)
+        if ansible_ssh_host is None:
+            ansible_ssh_host = next(iter(node.private_ips), None)
         return {
             'node_id': node.id,
             'state': node.state,
-            'ansible_ssh_host': next(iter(node.public_ips), None),
+            'ansible_ssh_host': ansible_ssh_host,
             'public_ips': node.public_ips,
             'private_ips': node.private_ips,
             'ai_active': node.extra['ai_active'],
