@@ -104,7 +104,7 @@ class GandiInventory(object):
         return {
             'node_id': node.id,
             'state': node.state,
-            'ansible_ssh_host': node.public_ips[0],
+            'ansible_ssh_host': next(iter(node.public_ips), None),
             'public_ips': node.public_ips,
             'private_ips': node.private_ips,
             'ai_active': node.extra['ai_active'],
