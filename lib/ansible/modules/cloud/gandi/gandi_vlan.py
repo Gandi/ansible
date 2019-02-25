@@ -33,14 +33,14 @@ options:
     description:
       - desired state of the resource
     required: false
-    default: "present"
+    default: "created"
     choices: ["created", "deleted"]
     aliases: []
   datacenter:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen"]
+     choices: ["FR-SD3","FR-SD5","FR-SD6", "LU-BI1"]
   subnet:
     description:
       - CIDR IPv4 subnet
@@ -61,8 +61,8 @@ EXAMPLES = '''
 # paris datacenter
 - gandi_vlan:
     name: mypvlan
-    datacenter: "Bissen"
-    subnet: 192.168.0.0./24
+    datacenter: "LU-BI1"
+    subnet: 192.168.0.0/24
     gateway: 192.168.0.254
 
 '''
@@ -105,12 +105,12 @@ def get_pvlan_info(pvlan):
 
 
 def get_pvlan(driver, name):
-    pvlans = driver.ex_list_pvlans()
+    pvlans = driver.ex_list_vlans()
     return _get_by_name(name, pvlans)
 
 
 def get_pvlans(driver, vlan_names = []):
-    all_pvlans = driver.ex_list_pvlans()
+    all_pvlans = driver.ex_list_vlans()
     pvlans = [_get_by_name(name, all_pvlans) for name in vlan_names]
 
     return pvlans
@@ -155,13 +155,13 @@ def create_pvlan(module, driver, pvlan_name):
 
     if not pvlan:
         try:
-            pvlan = driver.ex_create_pvlan(name=pvlan_name,
+            pvlan = driver.ex_create_vlan(name=pvlan_name,
                                            location=lc_location,
                                            subnet=subnet,
                                            gateway=gateway)
             changed = True
-        except GandiException as e:
-            msg = 'Unexpected error attempting to create pvlan %s' % pvlan_name
+        except GandiException as exc:
+            msg = 'Unexpected error attempting to create pvlan %s: %r' % (pvlan_name, exc)
             module.fail_json(msg=msg)
 
     pvlan_json_data = get_pvlan_info(pvlan)
@@ -184,11 +184,11 @@ def delete_pvlan(module, driver, pvlan_name):
 
     try:
         pvlan = get_pvlan(driver, pvlan_name)
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if pvlan:
-        driver.ex_delete_pvlan(pvlan)
+        driver.ex_delete_vlan(pvlan)
         changed = True
 
     return (changed, pvlan_name)
@@ -201,7 +201,7 @@ def main():
             name=dict(),
             state=dict(choices=['created', 'deleted'],
                        default='created'),
-            datacenter=dict(default='Bissen'),
+            datacenter=dict(default='FR-SD5'),
             subnet=dict(),
             gateway=dict()
         )
@@ -217,8 +217,8 @@ def main():
         gandi = get_driver(Provider.GANDI)(gandi_api_key)
         gandi.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if not name:
         module.fail_json(msg='Must specify a "name"', changed=False)

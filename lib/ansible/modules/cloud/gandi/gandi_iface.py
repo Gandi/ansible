@@ -35,7 +35,7 @@ options:
     description:
      - datacenter location for servers
      required: true
-     choices: ["Saint Denis", "Bissen"]
+     choices: ["FR-SD3","FR-SD5","FR-SD6", "LU-BI1"]
   bandwith:
      description:
        - bandwith ot the interface in bits/s (float)
@@ -65,7 +65,7 @@ EXAMPLES = '''
 # Luxembourg datacenter
 - gandi_iface:
     vlan: mypvlan
-    datacenter: "Bissen"
+    datacenter: "LU-BI1"
     ip_address: 192.168.0.1
     ip_version: 4
     bandwidth: 50000.0
@@ -87,22 +87,6 @@ except ImportError:
     print("failed=True " +
           "msg='libcloud with Gandi support required for this module'")
     sys.exit(1)
-
-
-# Load in the libcloud secrets file
-try:
-    import secrets
-except ImportError:
-    secrets = None
-
-
-ARGS = getattr(secrets, 'GANDI_PARAMS', ())
-
-if not ARGS:
-    print("failed=True " +
-          "msg='Missing Gandi connection in libcloud secrets file.'")
-    sys.exit(1)
-
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
@@ -128,7 +112,7 @@ def get_datacenter(driver, name):
 
 
 def get_pvlan(driver, name):
-    pvlans = driver.ex_list_pvlans()
+    pvlans = driver.ex_list_vlans()
     return _get_by_name(name, pvlans)
 
 
@@ -143,9 +127,9 @@ def get_iface_info(iface):
 
     """
     return({
-        'vlan': not iface.vlan is None and iface.vlan.name or None,
+        'id': iface.id,
+        'vlan': iface.extra.get('vlan'),
         'bandwidth': iface.extra.get('bandwidth'),
-        'datacenter_id': iface.extra.get('datacenter_id')
     })
 
 
@@ -183,14 +167,14 @@ def create_iface(module, driver):
         module.fail_json(msg='ip_version is mandatory when not a vlan',
                          changed=False)
     try:
-        iface = driver.ex_create_iface(location=lc_location,
+        iface = driver.ex_create_interface(location=lc_location,
                                        ip_version=ip_version,
                                        ip_address=ip_address,
                                        vlan=pvlan,
-                                       bandwitdh=bandwidth)
+                                       bandwidth=bandwidth)
 
         changed = True
-    except GandiException as e:
+    except GandiException as exc:
         module.fail_json(msg='Unexpected error attempting to create iface')
 
     iface_json_data = get_iface_info(iface)
@@ -213,8 +197,8 @@ def delete_iface(module, driver, iface_id):
 
     try:
         iface = get_iface(driver, iface_id)
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if iface:
         driver.ex_delete_iface(iface)
@@ -226,9 +210,10 @@ def delete_iface(module, driver, iface_id):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            gandi_api_key=dict(),
             state=dict(choices=['created', 'deleted'],
                        default='created'),
-            datacenter=dict(default='Bissen'),
+            datacenter=dict(default='FR-SD5'),
             ip_version=dict(),
             ip_address=dict(),
             vlan=dict(),
@@ -236,6 +221,7 @@ def main():
         )
     )
 
+    gandi_api_key = module.params.get('gandi_api_key')
     ip_version = module.params.get('ip_version')
     ip_address = module.params.get('ip_address')
     vlan_name = module.params.get('vlan')
@@ -245,11 +231,11 @@ def main():
     changed = False
 
     try:
-        gandi = get_driver(Provider.GANDI)(*ARGS)
+        gandi = get_driver(Provider.GANDI)(gandi_api_key)
         gandi.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
+    except Exception as exc:
+        module.fail_json(msg=unexpected_error_msg(exc), changed=False)
 
     if not dc and state in ['created']:
         module.fail_json(msg='Must specify a "datacenter"', changed=False)
